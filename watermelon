@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microalgae Biofuel Growth Rate</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .math-box {
+            background: #eef2f5;
+            padding: 15px;
+            border-left: 4px solid #2c3e50;
+            margin-bottom: 20px;
+            font-family: monospace;
+            font-size: 1.1em;
+        }
+        #info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e9;
+            border: 1px solid #c8e6c9;
+            border-radius: 5px;
+            display: none;
+        }
+        .source-text {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 10px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Optimizing Algae Biomass for Biofuel Production</h2>
+    <p>To maximize bio-jet fuel yield, we need to harvest microalgae when its growth rate is at its absolute peak. The graph below shows the total biomass concentration over 30 days.</p>
+    
+    <div class="math-box">
+        <strong>Biomass Function (Total Yield):</strong><br>
+        f(t) = 2.5 / (1 + 9e<sup>-0.3t</sup>) g/L<br><br>
+        <strong>Derivative Function (Daily Growth Rate):</strong><br>
+        f'(t) = (6.75e<sup>-0.3t</sup>) / (1 + 9e<sup>-0.3t</sup>)<sup>2</sup> g/L per day
+    </div>
+
+    <p><em>Click on any data point on the curve to calculate the derivative (growth rate) at that exact moment.</em></p>
+
+    <canvas id="growthChart" width="400" height="200"></canvas>
+    
+    <div id="info-panel">
+        <h3 style="margin-top: 0; color: #2e7d32;">Analysis at Day <span id="day-display"></span></h3>
+        <p><strong>Total Biomass f(t):</strong> <span id="biomass-display"></span> g/L</p>
+        <p><strong>Rate of Change f'(t):</strong> <span id="derivative-display"></span> g/L per day</p>
+        <p><strong>What this means:</strong> <span id="layman-explanation"></span></p>
+    </div>
+
+    <p class="source-text">Data source: Simulated model based on Malaysian Palm Oil Board (MPOB) and local university bioenergy research on Chlorella vulgaris cultivation in POME.</p>
+</div>
+
+<script>
+    // Mathematical setup
+    const calculateBiomass = (t) => 2.5 / (1 + 9 * Math.exp(-0.3 * t));
+    const calculateDerivative = (t) => {
+        const expTerm = Math.exp(-0.3 * t);
+        return (6.75 * expTerm) / Math.pow((1 + 9 * expTerm), 2);
+    };
+
+    // Generate data points for 30 days
+    const days = Array.from({length: 31}, (_, i) => i);
+    const biomassData = days.map(t => calculateBiomass(t));
+
+    // Chart.js initialization
+    const ctx = document.getElementById('growthChart').getContext('2d');
+    const growthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: days,
+            datasets: [{
+                label: 'Biomass Concentration (g/L)',
+                data: biomassData,
+                borderColor: '#2ecc71',
+                backgroundColor: 'rgba(46, 204, 113, 0.2)',
+                borderWidth: 3,
+                pointBackgroundColor: '#27ae60',
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            animation: {
+                duration: 2000,
+                easing: 'easeOutQuart'
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Time (Days)' }
+                },
+                y: {
+                    title: { display: true, text: 'Biomass (g/L)' },
+                    min: 0,
+                    max: 3
+                }
+            },
+            onClick: (e, activeElements) => {
+                if (activeElements.length > 0) {
+                    const dataIndex = activeElements[0].index;
+                    const day = days[dataIndex];
+                    const biomass = biomassData[dataIndex];
+                    const rate = calculateDerivative(day);
+                    
+                    updatePanel(day, biomass, rate);
+                }
+            }
+        }
+    });
+
+    // Update the UI panel with derivative explanation
+    function updatePanel(day, biomass, rate) {
+        document.getElementById('info-panel').style.display = 'block';
+        document.getElementById('day-display').innerText = day;
+        document.getElementById('biomass-display').innerText = biomass.toFixed(3);
+        document.getElementById('derivative-display').innerText = rate.toFixed(4);
+
+        let explanation = "";
+        if (day < 7) {
+            explanation = "The algae are just getting used to the environment. The derivative (growth rate) is low because the population is small, so they aren't multiplying very fast yet.";
+        } else if (day >= 7 && day <= 12) {
+            explanation = "This is the exponential phase. The derivative is hitting its maximum value. The algae are reproducing rapidly, making this the most productive time for the bioreactor.";
+        } else if (day > 12 && day < 20) {
+            explanation = "Growth is slowing down. The derivative is decreasing because the algae are running out of nutrients in the effluent and crowding each other out.";
+        } else {
+            explanation = "The population has stabilized. The derivative is close to zero, meaning new algae growth perfectly balances out cell death. This is the absolute latest you should harvest.";
+        }
+        
+        document.getElementById('layman-explanation').innerText = explanation;
+    }
+</script>
+
+</body>
+</html>
